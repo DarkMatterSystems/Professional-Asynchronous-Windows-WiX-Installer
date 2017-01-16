@@ -1,0 +1,64 @@
+
+DefineDomainInclude:005Domain015Entity_Registry_Value
+
+    | Copyright (C) 2017 Dark Matter Systems Ltd. All rights reserved.
+
+    Entity:Registry_Value
+        Attribute
+            Text : Root
+            Text : Key
+            Text : Value
+        Relationship
+            Writing -|> Component
+            Writing -|> Registry_Key
+        State
+
+            |-----------
+
+            DynamicState:Generating
+                StateAction
+                    Template
+                        <<:>>
+                        <<:>><RegistryValue
+                        <<TabIn>>
+                    CaseSelection
+                        WhenCase
+                            ConditionAnd
+                                TestAnd
+                                    Registry_Value.Root != <<EmptyString>>
+                            WhenCaseSelection
+                                Template
+                                    <<:>>Root='<<#Registry_Value.Root>>'
+                    CaseSelection
+                        WhenCase
+                            ConditionAnd
+                                TestAnd
+                                    Registry_Value.Key != <<EmptyString>>
+                            WhenCaseSelection
+                                Template
+                                    <<:>>Key='<<#Registry_Value.Key>>'
+                    Template
+                        <<:>>Value='<<#Registry_Value.Value>>'
+                        <<:>>Type='string'
+                        <<:>>KeyPath='yes'/>
+                        <<TabOut>>
+                    Traverse
+                        Navigation
+                            Registry_Value : Writing : Component
+                        TraverseSelection
+                            Unrelate
+                                Registry_Value : Writing : Component
+                            GenerateEvent
+                                Component : Complete
+                        NullTraverseSelection
+                            Traverse
+                                Navigation
+                                    Registry_Value : Writing : Registry_Key
+                                TraverseSelection
+                                    Unrelate
+                                        Registry_Value : Writing : Registry_Key
+                                    GenerateEvent
+                                        Registry_Key : Complete
+                Transition
+                    EventState
+                        Generate -> Generating

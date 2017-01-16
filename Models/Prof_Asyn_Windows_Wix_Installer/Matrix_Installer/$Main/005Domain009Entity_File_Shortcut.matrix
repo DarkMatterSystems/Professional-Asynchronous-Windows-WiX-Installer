@@ -1,0 +1,47 @@
+
+DefineDomainInclude:005Domain009Entity_File_Shortcut
+
+    | Copyright (C) 2017 Dark Matter Systems Ltd. All rights reserved.
+
+    Entity:File_Shortcut
+        Attribute
+            Flag : Processed
+            Text : Directory
+            Text : Icon
+        Relationship
+            Writing        -|> File
+            Specialisation --> Shortcut
+        State
+
+            |-----------
+
+            DynamicState:Generating
+                StateAction
+                    Traverse
+                        Navigation
+                            File_Shortcut : Specialisation : Shortcut
+                        TraverseSelection
+                            Template
+                                <<:>>
+                                <<:>><Shortcut
+                                <<TabIn>>
+                                <<:>>Id='<<#Shortcut.Id>>'
+                                <<:>>Directory='<<#File_Shortcut.Directory>>'
+                                <<:>>Name='<<#Shortcut.Name>>'
+                                <<:>>WorkingDirectory='INSTALLDIR'
+                                <<:>>Icon='<<#File_Shortcut.Icon>>'
+                                <<:>>IconIndex='0'
+                                <<:>>Advertise='yes'
+                                <<:>>Description='<<#Shortcut.Description>>'/>
+                                <<TabOut>>
+                    Traverse
+                        Navigation
+                            File_Shortcut : Writing : File
+                        TraverseSelection
+                            Unrelate
+                                File_Shortcut : Writing : File
+                            GenerateEvent
+                                File : Done
+                Transition
+                    EventState
+                        Generate -> Generating

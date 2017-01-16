@@ -1,0 +1,36 @@
+
+DefineDomainInclude:005Domain004Entity_Property
+
+    | Copyright (C) 2017 Dark Matter Systems Ltd. All rights reserved.
+
+    Entity:Property
+        Attribute
+            Flag : Processed
+            Text : Id
+            Text : Value
+        Relationship
+            Writing -|> Product
+        State
+
+            |-----------
+
+            DynamicState:Generating
+                StateAction
+                    Template
+                        <<:>>
+                        <<:>><Property
+                        <<TabIn>>
+                        <<:>>Id='<<#Property.Id>>'
+                        <<:>>Value='<<#Property.Value>>'/>
+                        <<TabOut>>
+                    Traverse
+                        Navigation
+                            Property : Writing : Product
+                        TraverseSelection
+                            Unrelate
+                                Property : Writing : Product
+                            GenerateEvent
+                                Product : Done
+                Transition
+                    EventState
+                        Generate -> Generating

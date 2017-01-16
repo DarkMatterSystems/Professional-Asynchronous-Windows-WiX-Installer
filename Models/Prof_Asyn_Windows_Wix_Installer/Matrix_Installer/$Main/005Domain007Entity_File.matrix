@@ -1,0 +1,134 @@
+
+DefineDomainInclude:005Domain007Entity_File
+
+    | Copyright (C) 2017 Dark Matter Systems Ltd. All rights reserved.
+
+    Entity:File
+        Attribute
+            Text : Id
+            Text : Name
+            Text : Source
+        Relationship
+            Includes |>> File_Shortcut
+            Writing  -|> Component
+        State
+
+            |-----------
+
+            CreationState:Creating
+                Transition
+                    EventState
+                        Generate -> Generating
+                    CannotHappen
+                        Generate_file_shortcut
+                        Done
+                        Complete
+
+            |-----------
+
+            DynamicState:Generating
+                StateAction
+                    Template
+                        <<:>>
+                        <<:>><File
+                        <<TabIn>>
+                        <<:>>Id='<<#File.Id>>'
+                        <<:>>Name='<<#File.Name>>'
+                        <<:>>DiskId='1'
+                        <<:>>Source='<<#File.Source>>'
+                        <<:>>KeyPath='yes'
+                    Traverse
+                        Navigation
+                            File : Includes : File_Shortcut
+                        TraverseSelection
+                            SelectionHead
+                                Template
+                                    >
+                        NullTraverseSelection
+                            Template
+                                />
+                    GenerateEvent
+                        File : Generate_file_shortcut
+                Transition
+                    EventState
+                        Generate_file_shortcut -> Generating_File_Shortcut
+                    CannotHappen
+                        Generate
+                        Done
+                        Complete
+
+            |-----------
+
+            DynamicState:Generating_File_Shortcut
+                ProcessData
+                    Flag : object_not_found
+                StateAction
+                    Assignment
+                        SetBoolean
+                            object_not_found := <<True>>
+                    Traverse
+                        Navigation
+                            File : Includes : File_Shortcut
+                        TraverseSelection
+                            CaseSelection
+                                WhenCase
+                                    ConditionAnd
+                                        BooleanAnd
+                                            object_not_found
+                                        BooleanNand
+                                            File_Shortcut.Processed
+                                    WhenCaseSelection
+                                        Assignment
+                                            SetBoolean
+                                                object_not_found        := <<False>>
+                                                File_Shortcut.Processed := <<True>>
+                                        Relate
+                                            File_Shortcut : Writing : File
+                                        GenerateEvent
+                                            File_Shortcut : Generate
+                    CaseSelection
+                        WhenCase
+                            ConditionAnd
+                                BooleanAnd
+                                    object_not_found
+                            WhenCaseSelection
+                                GenerateEvent
+                                    File : Complete
+                Transition
+                    EventState
+                        Done     -> Generating_File_Shortcut
+                        Complete -> Idle
+                    CannotHappen
+                        Generate
+                        Generate_file_shortcut
+
+            |-----------
+
+            DynamicState:Idle
+                StateAction
+                    Traverse
+                        Navigation
+                            File : Includes : File_Shortcut
+                        TraverseSelection
+                            SelectionHead
+                                Template
+                                    <<:>>
+                                    <<TabOut>>
+                                    <<:>></File>
+                        NullTraverseSelection
+                            Template
+                                <<TabOut>>
+                    Traverse
+                        Navigation
+                            File : Writing : Component
+                        TraverseSelection
+                            Unrelate
+                                File : Writing : Component
+                            GenerateEvent
+                                Component : Complete
+                Transition
+                    CannotHappen
+                        Generate
+                        Generate_file_shortcut
+                        Done
+                        Complete

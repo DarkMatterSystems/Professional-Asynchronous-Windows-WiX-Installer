@@ -1,0 +1,36 @@
+
+DefineDomainInclude:005Domain002Entity_Icon
+
+    | Copyright (C) 2017 Dark Matter Systems Ltd. All rights reserved.
+
+    Entity:Icon
+        Attribute
+            Flag : Processed
+            Text : Id
+            Text : Source_file
+        Relationship
+            Writing -|> Product
+        State
+
+            |-----------
+
+            DynamicState:Generating
+                StateAction
+                    Template
+                        <<:>>
+                        <<:>><Icon
+                        <<TabIn>>
+                        <<:>>Id='<<#Icon.Id>>'
+                        <<:>>SourceFile='<<#Icon.Source_file>>'/>
+                        <<TabOut>>
+                    Traverse
+                        Navigation
+                            Icon : Writing : Product
+                        TraverseSelection
+                            Unrelate
+                                Icon : Writing : Product
+                            GenerateEvent
+                                Product : Done
+                Transition
+                    EventState
+                        Generate -> Generating

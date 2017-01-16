@@ -1,0 +1,49 @@
+
+System:Prof_Asyn_Windows_Wix_Installer
+
+    | Copyright (C) 2017 Dark Matter Systems Ltd. All rights reserved.
+
+    Description
+        Paragraph:Title
+            Professional Asynchronous Windows WiX Matrix Installer Model
+
+    Type
+        BaseType
+            Boolean
+                Flag
+            String
+                Text : 120
+
+    Matrix:Model:Application
+        Silo:M1:Software_Application
+            Realm:Analysis_Of_Application
+                Domain:Matrix_Installer
+
+                    EventContext
+                        ImportEvent
+                            Product : Generate
+
+                    |===========================================================
+
+                    DomainInclude
+                        005Domain001Entity_Product
+                        005Domain002Entity_Icon
+                        005Domain003Entity_Package
+                        005Domain004Entity_Property
+                        005Domain005Entity_Directory
+                        005Domain006Entity_Component
+                        005Domain007Entity_File
+                        005Domain008Entity_Shortcut
+                        005Domain009Entity_File_Shortcut
+                        005Domain010Entity_Uninstall_Shortcut
+                        005Domain011Entity_Create_Folder
+                        005Domain012Entity_Remove_Folder
+                        005Domain013Entity_Environment
+                        005Domain014Entity_Registry_Key
+                        005Domain015Entity_Registry_Value
+                        005Domain016Entity_Feature
+
+        |=======================================================================
+
+        MatrixInclude
+            002Matrix001Silo_Real_World_Objects

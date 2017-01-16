@@ -1,0 +1,43 @@
+
+DefineDomainInclude:005Domain010Entity_Uninstall_Shortcut
+
+    | Copyright (C) 2017 Dark Matter Systems Ltd. All rights reserved.
+
+    Entity:Uninstall_Shortcut
+        Attribute
+            Text : Target
+            Text : Arguments
+        Relationship
+            Writing        -|> Component
+            Specialisation --> Shortcut
+        State
+
+            |-----------
+
+            DynamicState:Generating
+                StateAction
+                    Traverse
+                        Navigation
+                            Uninstall_Shortcut : Specialisation : Shortcut
+                        TraverseSelection
+                            Template
+                                <<:>>
+                                <<:>><Shortcut
+                                <<TabIn>>
+                                <<:>>Id='<<#Shortcut.Id>>'
+                                <<:>>Name='<<#Shortcut.Name>>'
+                                <<:>>Target='<<#Uninstall_Shortcut.Target>>'
+                                <<:>>Arguments='<<#Uninstall_Shortcut.Arguments>>'
+                                <<:>>Description='<<#Shortcut.Description>>'/>
+                                <<TabOut>>
+                    Traverse
+                        Navigation
+                            Uninstall_Shortcut : Writing : Component
+                        TraverseSelection
+                            Unrelate
+                                Uninstall_Shortcut : Writing : Component
+                            GenerateEvent
+                                Component : Complete
+                Transition
+                    EventState
+                        Generate -> Generating

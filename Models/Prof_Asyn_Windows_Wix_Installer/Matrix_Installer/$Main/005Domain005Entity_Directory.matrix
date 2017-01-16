@@ -1,0 +1,240 @@
+
+DefineDomainInclude:005Domain005Entity_Directory
+
+    | Copyright (C) 2017 Dark Matter Systems Ltd. All rights reserved.
+
+    Entity:Directory
+        Attribute
+            Flag : Processed
+            Text : Id
+            Text : Name
+            Text : Heading
+        Relationship
+            Includes |>> Component
+            Includes |>> Directory
+            Writing  -|> Product
+            Writing  -|> Directory
+        State
+
+            |-----------
+
+            CreationState:Creating
+                Transition
+                    EventState
+                        Generate -> Display_Heading
+                    CannotHappen
+                        Generate_component
+                        Generate_directory
+                        Done
+                        Complete
+
+            |-----------
+
+            DynamicState:Display_Heading
+                StateAction
+                    CaseSelection
+                        WhenCase
+                            ConditionAnd
+                                TestAnd
+                                    Directory.Heading != <<EmptyString>>
+                            WhenCaseSelection
+                                Template
+                                    <<:>>
+                                    <<:>>
+                                    <<:>><!-- <<#Directory.Heading>> -->
+                    GenerateEvent
+                        Directory : Generate
+                Transition
+                    EventState
+                        Generate -> Generating
+                    CannotHappen
+                        Generate_component
+                        Generate_directory
+                        Done
+                        Complete
+
+            |-----------
+
+            DynamicState:Generating
+                StateAction
+                    Template
+                        <<:>>
+                        <<:>><Directory
+                        <<TabIn>>
+                        <<:>>Id='<<#Directory.Id>>'
+                        <<:>>Name='<<#Directory.Name>>'
+                    Traverse
+                        Navigation
+                            Directory : Includes : Component
+                        TraverseSelection
+                            SelectionHead
+                                Template
+                                    >
+                                GenerateEvent
+                                    Directory : Generate_component
+                        NullTraverseSelection
+                            Traverse
+                                Navigation
+                                    Directory : Includes : Directory
+                                TraverseSelection
+                                    SelectionHead
+                                        Template
+                                            >
+                                        GenerateEvent
+                                            Directory^1 : Generate_directory
+                                NullTraverseSelection
+                                    Template
+                                        />
+                                    GenerateEvent
+                                        Directory : Complete
+                Transition
+                    EventState
+                        Complete           -> Idle
+                        Generate_component -> Generating_Component
+                        Generate_directory -> Generating_Directory
+                    CannotHappen
+                        Generate
+                        Done
+
+            |-----------
+
+            DynamicState:Generating_Component
+                ProcessData
+                    Flag : object_not_found
+                StateAction
+                    Assignment
+                        SetBoolean
+                            object_not_found := <<True>>
+                    Traverse
+                        Navigation
+                            Directory : Includes : Component
+                        TraverseSelection
+                            CaseSelection
+                                WhenCase
+                                    ConditionAnd
+                                        BooleanAnd
+                                            object_not_found
+                                        BooleanNand
+                                            Component.Processed
+                                    WhenCaseSelection
+                                        Assignment
+                                            SetBoolean
+                                                object_not_found    := <<False>>
+                                                Component.Processed := <<True>>
+                                        Relate
+                                            Component : Writing : Directory
+                                        GenerateEvent
+                                            Component : Generate
+                    CaseSelection
+                        WhenCase
+                            ConditionAnd
+                                BooleanAnd
+                                    object_not_found
+                            WhenCaseSelection
+                                GenerateEvent
+                                    Directory : Complete
+                Transition
+                    EventState
+                        Done     -> Generating_Component
+                        Complete -> Generating_Directory
+                    CannotHappen
+                        Generate
+                        Generate_component
+                        Generate_directory
+
+            |-----------
+
+            DynamicState:Generating_Directory
+                ProcessData
+                    Flag : object_not_found
+                StateAction
+                    Assignment
+                        SetBoolean
+                            object_not_found := <<True>>
+                    Traverse
+                        Navigation
+                            Directory : Includes : Directory
+                        TraverseSelection
+                            CaseSelection
+                                WhenCase
+                                    ConditionAnd
+                                        BooleanAnd
+                                            object_not_found
+                                        BooleanNand
+                                            Directory.Processed
+                                    WhenCaseSelection
+                                        Assignment
+                                            SetBoolean
+                                                object_not_found    := <<False>>
+                                                Directory.Processed := <<True>>
+                                        Relate
+                                            Directory : Writing : Directory^1
+                                        GenerateEvent
+                                            Directory : Generate
+                    CaseSelection
+                        WhenCase
+                            ConditionAnd
+                                BooleanAnd
+                                    object_not_found
+                            WhenCaseSelection
+                                GenerateEvent
+                                    Directory : Complete
+                Transition
+                    EventState
+                        Done     -> Generating_Directory
+                        Complete -> Idle
+                    CannotHappen
+                        Generate
+                        Generate_component
+                        Generate_directory
+
+            |-----------
+
+            DynamicState:Idle
+                StateAction
+                    Traverse
+                        Navigation
+                            Directory : Includes : Component
+                        TraverseSelection
+                            SelectionHead
+                                Template
+                                    <<:>>
+                                    <<TabOut>>
+                                    <<:>></Directory>
+                        NullTraverseSelection
+                            Traverse
+                                Navigation
+                                    Directory : Includes : Directory
+                                TraverseSelection
+                                    SelectionHead
+                                        Template
+                                            <<:>>
+                                            <<TabOut>>
+                                            <<:>></Directory>
+                                NullTraverseSelection
+                                    Template
+                                        <<TabOut>>
+                    Traverse
+                        Navigation
+                            Directory : Writing : Directory
+                        TraverseSelection
+                            Unrelate
+                                Directory^1 : Writing : Directory
+                            GenerateEvent
+                                Directory : Done
+                        NullTraverseSelection
+                            Traverse
+                                Navigation
+                                    Directory : Writing : Product
+                                TraverseSelection
+                                    Unrelate
+                                        Directory : Writing : Product
+                                    GenerateEvent
+                                        Product : Complete
+                Transition
+                    CannotHappen
+                        Generate
+                        Generate_component
+                        Generate_directory
+                        Done
+                        Complete

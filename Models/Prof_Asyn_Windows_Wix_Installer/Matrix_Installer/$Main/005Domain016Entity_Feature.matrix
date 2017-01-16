@@ -1,0 +1,267 @@
+
+DefineDomainInclude:005Domain016Entity_Feature
+
+    | Copyright (C) 2017 Dark Matter Systems Ltd. All rights reserved.
+
+    Entity:Feature
+        Attribute
+            Flag : Processed
+            Text : Id
+            Text : Title
+            Text : Display
+            Text : Description
+            Text : Configurable_directory
+            Text : Heading
+        Relationship
+            Includes |>> Component
+            Includes |>> Feature
+            Writing  -|> Product
+            Writing  -|> Feature
+        State
+
+            |-----------
+
+            CreationState:Creating
+                Transition
+                    EventState
+                        Generate -> Display_Heading
+                    CannotHappen
+                        Generate_feature
+                        Generate_component
+                        Done
+                        Complete
+
+            |-----------
+
+            DynamicState:Display_Heading
+                StateAction
+                    CaseSelection
+                        WhenCase
+                            ConditionAnd
+                                TestAnd
+                                    Feature.Heading != <<EmptyString>>
+                            WhenCaseSelection
+                                Template
+                                    <<:>>
+                                    <<:>>
+                                    <<:>><!-- <<#Feature.Heading>> -->
+                    GenerateEvent
+                        Feature : Generate
+                Transition
+                    EventState
+                        Generate -> Generating
+                    CannotHappen
+                        Generate_feature
+                        Generate_component
+                        Done
+                        Complete
+
+            |-----------
+
+            DynamicState:Generating
+                StateAction
+                    Template
+                        <<:>>
+                        <<:>><Feature
+                        <<TabIn>>
+                        <<:>>Id='<<#Feature.Id>>'
+                        <<:>>Title='<<#Feature.Title>>'
+                        <<:>>Level='1'
+                    CaseSelection
+                        WhenCase
+                            ConditionAnd
+                                TestAnd
+                                    Feature.Description != <<EmptyString>>
+                            WhenCaseSelection
+                                Template
+                                    <<:>>Description='<<#Feature.Description>>'
+                    CaseSelection
+                        WhenCase
+                            ConditionAnd
+                                TestAnd
+                                    Feature.Display != <<EmptyString>>
+                            WhenCaseSelection
+                                Template
+                                    <<:>>Display='<<#Feature.Display>>'
+                    CaseSelection
+                        WhenCase
+                            ConditionAnd
+                                TestAnd
+                                    Feature.Configurable_directory != <<EmptyString>>
+                            WhenCaseSelection
+                                Template
+                                    <<:>>ConfigurableDirectory='<<#Feature.Configurable_directory>>'
+                    Template
+                        >
+                    Traverse
+                        Navigation
+                            Feature : Includes : Feature
+                        TraverseSelection
+                            SelectionHead
+                                GenerateEvent
+                                    Feature^1 : Generate_feature
+                        NullTraverseSelection
+                            Traverse
+                                Navigation
+                                    Feature : Includes : Component
+                                TraverseSelection
+                                    SelectionHead
+                                        Template
+                                            <<:>>
+                                        Traverse
+                                            Navigation
+                                                Feature : Includes : Component
+                                            TraverseSelection
+                                                Assignment
+                                                    SetBoolean
+                                                        Component.Processed := <<False>>
+                                        GenerateEvent
+                                            Feature : Generate_component
+                Transition
+                    EventState
+                        Generate_feature   -> Generating_Feature
+                        Generate_component -> Generating_Component
+                    CannotHappen
+                        Generate
+                        Done
+                        Complete
+
+            |-----------
+
+            DynamicState:Generating_Feature
+                ProcessData
+                    Flag : object_not_found
+                StateAction
+                    Assignment
+                        SetBoolean
+                            object_not_found := <<True>>
+                    Traverse
+                        Navigation
+                            Feature : Includes : Feature
+                        TraverseSelection
+                            CaseSelection
+                                WhenCase
+                                    ConditionAnd
+                                        BooleanAnd
+                                            object_not_found
+                                        BooleanNand
+                                            Feature.Processed
+                                    WhenCaseSelection
+                                        Assignment
+                                            SetBoolean
+                                                object_not_found  := <<False>>
+                                                Feature.Processed := <<True>>
+                                        Relate
+                                            Feature : Writing : Feature^1
+                                        GenerateEvent
+                                            Feature : Generate
+                    CaseSelection
+                        WhenCase
+                            ConditionAnd
+                                BooleanAnd
+                                    object_not_found
+                            WhenCaseSelection
+                                GenerateEvent
+                                    Feature : Complete
+                Transition
+                    EventState
+                        Done     -> Generating_Feature
+                        Complete -> Finishing_Product_Feature
+                    CannotHappen
+                        Generate
+                        Generate_feature
+                        Generate_component
+
+            |-----------
+
+            DynamicState:Finishing_Product_Feature
+                StateAction
+                    Template
+                        <<:>>
+                        <<TabOut>>
+                        <<:>></Feature>
+                    Traverse
+                        Navigation
+                            Feature : Writing : Product
+                        TraverseSelection
+                            Unrelate
+                                Feature : Writing : Product
+                            GenerateEvent
+                                Product : Complete
+                Transition
+                    CannotHappen
+                        Generate
+                        Generate_component
+                        Generate_feature
+                        Done
+                        Complete
+
+            |-----------
+
+            DynamicState:Generating_Component
+                ProcessData
+                    Flag : object_not_found
+                StateAction
+                    Assignment
+                        SetBoolean
+                            object_not_found := <<True>>
+                    Traverse
+                        Navigation
+                            Feature : Includes : Component
+                        TraverseSelection
+                            CaseSelection
+                                WhenCase
+                                    ConditionAnd
+                                        BooleanAnd
+                                            object_not_found
+                                        BooleanNand
+                                            Component.Processed
+                                    WhenCaseSelection
+                                        Assignment
+                                            SetBoolean
+                                                object_not_found    := <<False>>
+                                                Component.Processed := <<True>>
+                                        Relate
+                                            Component : Writing : Feature
+                                        GenerateEvent
+                                            Component : Generate_reference
+                    CaseSelection
+                        WhenCase
+                            ConditionAnd
+                                BooleanAnd
+                                    object_not_found
+                            WhenCaseSelection
+                                GenerateEvent
+                                    Feature : Complete
+                Transition
+                    EventState
+                        Done     -> Generating_Component
+                        Complete -> Finishing_Component_Feature
+                    CannotHappen
+                        Generate
+                        Generate_feature
+                        Generate_component
+
+            |-----------
+
+            DynamicState:Finishing_Component_Feature
+                StateAction
+                    Template
+                        <<:>>
+                        <<TabOut>>
+                        <<:>></Feature>
+                    Traverse
+                        Navigation
+                            Feature : Writing : Feature
+                        TraverseSelection
+                            Unrelate
+                                Feature^1 : Writing : Feature
+                            GenerateEvent
+                                Feature : Done
+                Transition
+                    CannotHappen
+                        Generate
+                        Generate_component
+                        Generate_feature
+                        Done
+                        Complete

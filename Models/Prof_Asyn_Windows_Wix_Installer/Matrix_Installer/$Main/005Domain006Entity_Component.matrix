@@ -1,0 +1,263 @@
+
+DefineDomainInclude:005Domain006Entity_Component
+
+    | Copyright (C) 2017 Dark Matter Systems Ltd. All rights reserved.
+
+    Entity:Component
+        Attribute
+            Flag : Processed
+            Text : Id
+            Text : Guid
+            Text : Condition
+        Relationship
+            Includes -|> File
+            Includes -|> Uninstall_Shortcut
+            Includes -|> Create_Folder
+            Includes -|> Remove_Folder
+            Includes -|> Environment
+            Includes -|> Registry_Key
+            Includes -|> Registry_Value
+            Writing  -|> Directory
+            Writing  -|> Feature
+        State
+
+            |-----------
+
+            CreationState:Creating
+                Transition
+                    EventState
+                        Generate           -> Generating
+                        Generate_reference -> Generating_Reference
+                    CannotHappen
+                        Complete
+
+            |-----------
+
+            DynamicState:Generating
+                StateAction
+                    Template
+                        <<:>>
+                        <<:>><Component
+                        <<TabIn>>
+                        <<:>>Id='<<#Component.Id>>'
+                        <<:>>Guid='<<#Component.Guid>>'>
+                    CaseSelection
+                        WhenCase
+                            ConditionAnd
+                                TestAnd
+                                    Component.Condition != <<EmptyString>>
+                            WhenCaseSelection
+                                Template
+                                    <<:>>
+                                    <<:>><Condition>
+                                    <<TabIn>>
+                                    <<:>>
+                                    <<:>><<#Component.Condition>>
+                                    <<TabOut>>
+                                    <<:>>
+                                    <<:>></Condition>
+                    GenerateEvent
+                        Component : Generate
+                Transition
+                    EventState
+                        Generate -> Generating_File
+                    CannotHappen
+                        Generate_reference
+                        Complete
+
+            |-----------
+
+            DynamicState:Generating_File
+                StateAction
+                    Traverse
+                        Navigation
+                            Component : Includes : File
+                        TraverseSelection
+                            Relate
+                                File : Writing : Component
+                            GenerateEvent
+                                File : Generate
+                        NullTraverseSelection
+                            GenerateEvent
+                                Component : Complete
+                Transition
+                    EventState
+                        Complete -> Generating_Uninstall_Shortcut
+                    CannotHappen
+                        Generate_reference
+                        Generate
+
+            |-----------
+
+            DynamicState:Generating_Uninstall_Shortcut
+                StateAction
+                    Traverse
+                        Navigation
+                            Component : Includes : Uninstall_Shortcut
+                        TraverseSelection
+                            Relate
+                                Uninstall_Shortcut : Writing : Component
+                            GenerateEvent
+                                Uninstall_Shortcut : Generate
+                        NullTraverseSelection
+                            GenerateEvent
+                                Component : Complete
+                Transition
+                    EventState
+                        Complete -> Generating_Create_Folder
+                    CannotHappen
+                        Generate_reference
+                        Generate
+
+            |-----------
+
+            DynamicState:Generating_Create_Folder
+                StateAction
+                    Traverse
+                        Navigation
+                            Component : Includes : Create_Folder
+                        TraverseSelection
+                            Relate
+                                Create_Folder : Writing : Component
+                            GenerateEvent
+                                Create_Folder : Generate
+                        NullTraverseSelection
+                            GenerateEvent
+                                Component : Complete
+                Transition
+                    EventState
+                        Complete -> Generating_Remove_Folder
+                    CannotHappen
+                        Generate_reference
+                        Generate
+
+            |-----------
+
+            DynamicState:Generating_Remove_Folder
+                StateAction
+                    Traverse
+                        Navigation
+                            Component : Includes : Remove_Folder
+                        TraverseSelection
+                            Relate
+                                Remove_Folder : Writing : Component
+                            GenerateEvent
+                                Remove_Folder : Generate
+                        NullTraverseSelection
+                            GenerateEvent
+                                Component : Complete
+                Transition
+                    EventState
+                        Complete -> Generating_Environment
+                    CannotHappen
+                        Generate_reference
+                        Generate
+
+            |-----------
+
+            DynamicState:Generating_Environment
+                StateAction
+                    Traverse
+                        Navigation
+                            Component : Includes : Environment
+                        TraverseSelection
+                            Relate
+                                Environment : Writing : Component
+                            GenerateEvent
+                                Environment : Generate
+                        NullTraverseSelection
+                            GenerateEvent
+                                Component : Complete
+                Transition
+                    EventState
+                        Complete -> Generating_Registry_Key
+                    CannotHappen
+                        Generate_reference
+                        Generate
+
+            |-----------
+
+            DynamicState:Generating_Registry_Key
+                StateAction
+                    Traverse
+                        Navigation
+                            Component : Includes : Registry_Key
+                        TraverseSelection
+                            Relate
+                                Registry_Key : Writing : Component
+                            GenerateEvent
+                                Registry_Key : Generate
+                        NullTraverseSelection
+                            GenerateEvent
+                                Component : Complete
+                Transition
+                    EventState
+                        Complete -> Generating_Registry_Value
+                    CannotHappen
+                        Generate_reference
+                        Generate
+
+            |-----------
+
+            DynamicState:Generating_Registry_Value
+                StateAction
+                    Traverse
+                        Navigation
+                            Component : Includes : Registry_Value
+                        TraverseSelection
+                            Relate
+                                Registry_Value : Writing : Component
+                            GenerateEvent
+                                Registry_Value : Generate
+                        NullTraverseSelection
+                            GenerateEvent
+                                Component : Complete
+                Transition
+                    EventState
+                        Complete -> Idle
+                    CannotHappen
+                        Generate_reference
+                        Generate
+
+            |-----------
+
+            DynamicState:Idle
+                StateAction
+                    Template
+                        <<:>>
+                        <<TabOut>>
+                        <<:>></Component>
+                    Traverse
+                        Navigation
+                            Component : Writing : Directory
+                        TraverseSelection
+                            Unrelate
+                                Component : Writing : Directory
+                            GenerateEvent
+                                Directory : Done
+                Transition
+                    EventState
+                        Generate_reference -> Generating_Reference
+                    CannotHappen
+                        Generate
+                        Complete
+
+            |-----------
+
+            DynamicState:Generating_Reference
+                StateAction
+                    Template
+                        <<:>><ComponentRef Id='<<#Component.Id>>'/>
+                    Traverse
+                        Navigation
+                            Component : Writing : Feature
+                        TraverseSelection
+                            Unrelate
+                                Component : Writing : Feature
+                            GenerateEvent
+                                Feature : Done
+                Transition
+                    CannotHappen
+                        Generate
+                        Generate_reference
+                        Complete

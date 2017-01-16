@@ -1,0 +1,41 @@
+
+DefineDomainInclude:005Domain013Entity_Environment
+
+    | Copyright (C) 2017 Dark Matter Systems Ltd. All rights reserved.
+
+    Entity:Environment
+        Attribute
+            Text : Id
+            Text : Name
+            Text : Value
+        Relationship
+            Writing -|> Component
+        State
+
+            |-----------
+
+            DynamicState:Generating
+                StateAction
+                    Template
+                        <<:>>
+                        <<:>><Environment
+                        <<TabIn>>
+                        <<:>>Id='<<#Environment.Id>>'
+                        <<:>>Action='set'
+                        <<:>>Part='all'
+                        <<:>>Name='<<#Environment.Name>>'
+                        <<:>>Permanent='no'
+                        <<:>>System='yes'
+                        <<:>>Value='<<#Environment.Value>>'/>
+                        <<TabOut>>
+                    Traverse
+                        Navigation
+                            Environment : Writing : Component
+                        TraverseSelection
+                            Unrelate
+                                Environment : Writing : Component
+                            GenerateEvent
+                                Component : Complete
+                Transition
+                    EventState
+                        Generate -> Generating

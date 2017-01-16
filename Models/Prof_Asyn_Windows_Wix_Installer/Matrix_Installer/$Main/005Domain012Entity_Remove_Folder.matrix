@@ -1,0 +1,35 @@
+
+DefineDomainInclude:005Domain012Entity_Remove_Folder
+
+    | Copyright (C) 2017 Dark Matter Systems Ltd. All rights reserved.
+
+    Entity:Remove_Folder
+        Attribute
+            Text : Id
+            Text : On
+        Relationship
+            Writing -|> Component
+        State
+
+            |-----------
+
+            DynamicState:Generating
+                StateAction
+                    Template
+                        <<:>>
+                        <<:>><RemoveFolder
+                        <<TabIn>>
+                        <<:>>Id='<<#Remove_Folder.Id>>'
+                        <<:>>On='<<#Remove_Folder.On>>'/>
+                        <<TabOut>>
+                    Traverse
+                        Navigation
+                            Remove_Folder : Writing : Component
+                        TraverseSelection
+                            Unrelate
+                                Remove_Folder : Writing : Component
+                            GenerateEvent
+                                Component : Complete
+                Transition
+                    EventState
+                        Generate -> Generating

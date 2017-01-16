@@ -1,0 +1,43 @@
+
+DefineDomainInclude:005Domain003Entity_Package
+
+    | Copyright (C) 2017 Dark Matter Systems Ltd. All rights reserved.
+
+    Entity:Package
+        Attribute
+            Text : Description
+            Text : Comments
+            Text : Manufacture
+        Relationship
+            Writing -|> Product
+        State
+
+            |-----------
+
+            DynamicState:Generating
+                StateAction
+                    Template
+                        <<:>>
+                        <<:>><Package
+                        <<TabIn>>
+                        <<:>>Id='*'
+                        <<:>>Keywords='Installer'
+                        <<:>>Description='<<#Package.Description>>'
+                        <<:>>Comments='<<#Package.Comments>>'
+                        <<:>>Manufacturer='<<#Package.Manufacture>>'
+                        <<:>>InstallerVersion='100'
+                        <<:>>Languages='1033'
+                        <<:>>Compressed='yes'
+                        <<:>>SummaryCodepage='1252'/>
+                        <<TabOut>>
+                    Traverse
+                        Navigation
+                            Package : Writing : Product
+                        TraverseSelection
+                            Unrelate
+                                Package : Writing : Product
+                            GenerateEvent
+                                Product : Complete
+                Transition
+                    EventState
+                        Generate -> Generating

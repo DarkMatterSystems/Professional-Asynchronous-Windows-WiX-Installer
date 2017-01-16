@@ -1,0 +1,28 @@
+
+DefineDomainInclude:005Domain011Entity_Create_Folder
+
+    | Copyright (C) 2017 Dark Matter Systems Ltd. All rights reserved.
+
+    Entity:Create_Folder
+        Relationship
+            Writing -|> Component
+        State
+
+            |-----------
+
+            DynamicState:Generating
+                StateAction
+                    Template
+                        <<:>>
+                        <<:>><CreateFolder/>
+                    Traverse
+                        Navigation
+                            Create_Folder : Writing : Component
+                        TraverseSelection
+                            Unrelate
+                                Create_Folder : Writing : Component
+                            GenerateEvent
+                                Component : Complete
+                Transition
+                    EventState
+                        Generate -> Generating

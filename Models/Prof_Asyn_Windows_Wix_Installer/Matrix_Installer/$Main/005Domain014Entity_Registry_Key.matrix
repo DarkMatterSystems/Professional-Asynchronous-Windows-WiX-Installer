@@ -1,0 +1,79 @@
+
+DefineDomainInclude:005Domain014Entity_Registry_Key
+
+    | Copyright (C) 2017 Dark Matter Systems Ltd. All rights reserved.
+
+    Entity:Registry_Key
+        Attribute
+            Text : Root
+            Text : Key
+        Relationship
+            Includes --> Registry_Value
+            Writing  -|> Component
+        State
+
+            |-----------
+
+            CreationState:Creating
+                Transition
+                    EventState
+                        Generate -> Generating
+                    CannotHappen
+                        Complete
+
+            |-----------
+
+            DynamicState:Generating
+                StateAction
+                    Template
+                        <<:>>
+                        <<:>><RegistryKey
+                        <<TabIn>>
+                        <<:>>Root='<<#Registry_Key.Root>>'
+                        <<:>>Key='<<#Registry_Key.Key>>'>
+                    GenerateEvent
+                        Registry_Key : Generate
+                Transition
+                    EventState
+                        Generate -> Generating_Registry_Value
+                    CannotHappen
+                        Complete
+
+            |-----------
+
+            DynamicState:Generating_Registry_Value
+                StateAction
+                    Traverse
+                        Navigation
+                            Registry_Key : Includes : Registry_Value
+                        TraverseSelection
+                            Relate
+                                Registry_Value : Writing : Registry_Key
+                            GenerateEvent
+                                Registry_Value : Generate
+                Transition
+                    EventState
+                        Complete -> Idle
+                    CannotHappen
+                        Generate
+
+            |-----------
+
+            DynamicState:Idle
+                StateAction
+                    Template
+                        <<:>>
+                        <<TabOut>>
+                        <<:>></RegistryKey>
+                    Traverse
+                        Navigation
+                            Registry_Key : Writing : Component
+                        TraverseSelection
+                            Unrelate
+                                Registry_Key : Writing : Component
+                            GenerateEvent
+                                Component : Complete
+                Transition
+                    CannotHappen
+                        Generate
+                        Complete

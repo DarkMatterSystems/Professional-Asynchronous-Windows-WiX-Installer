@@ -1,0 +1,301 @@
+
+DefineDomainInclude:005Domain001Entity_Product
+
+    | Copyright (C) 2017 Dark Matter Systems Ltd. All rights reserved.
+
+    Entity:Product
+        Attribute
+            Text : Id
+            Text : Name
+            Text : Upgrade_code
+            Text : Version
+            Text : Manufacturer
+            Text : Download_version
+        Relationship
+            Includes ->> Icon
+            Includes --> Package
+            Includes ->> Property
+            Includes --> Directory
+            Includes --> Feature
+        State
+
+            |-----------
+
+            CreationState:Creating
+                Transition
+                    EventState
+                        Generate -> Generating_Product
+                    CannotHappen
+                        Done
+                        Complete
+
+            |-----------
+
+            DynamicState:Generating_Product
+                StateAction
+                    Stream
+                        M:\Matrix\Scenarios\Prof_Asyn_Windows_Wix_Installer\Logging\Matrix-V<<#Product.Download_version>>.wxs
+                    Template
+                        <<|>><?xml version='1.0' encoding='windows-1252'?>
+                        <<:>>
+                        <<:>><!-- Learning Edition Installer -->
+                        <<:>><!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+                        <<:>>
+                        <<:>><Wix xmlns='http://schemas.microsoft.com/wix/2006/wi'>
+                        <<:>>
+                        <<TabIn>>
+                        <<:>><!-- Filename: Matrix-V<<#Product.Download_version>>.wxs -->
+                        <<:>>
+                        <<:>><Product
+                        <<TabIn>>
+                        <<:>>Id='<<#Product.Id>>'
+                        <<:>>Name='<<#Product.Name>>'
+                        <<:>>UpgradeCode='<<#Product.Upgrade_code>>'
+                        <<:>>Language='1033'
+                        <<:>>Codepage='1252'
+                        <<:>>Version='<<#Product.Version>>'
+                        <<:>>Manufacturer='<<#Product.Manufacturer>>'>
+                        <<:>>
+                        <<:>>
+                        <<:>><!-- Prologe -->
+                        <<:>><!-- ~~~~~~~ -->
+                    GenerateEvent
+                        Product : Generate
+                Transition
+                    EventState
+                        Generate -> Generating_Package
+                    CannotHappen
+                        Done
+                        Complete
+
+            |-----------
+
+            DynamicState:Generating_Package
+                StateAction
+                    Traverse
+                        Navigation
+                            Product : Includes : Package
+                        TraverseSelection
+                            Relate
+                                Package : Writing : Product
+                            GenerateEvent
+                                Package : Generate
+                Transition
+                    EventState
+                        Complete -> Generating_Property
+                    CannotHappen
+                        Generate
+                        Done
+
+            |-----------
+
+            DynamicState:Generating_Property
+                ProcessData
+                    Flag : object_not_found
+                StateAction
+                    Assignment
+                        SetBoolean
+                            object_not_found := <<True>>
+                    Traverse
+                        Navigation
+                            Product : Includes : Property
+                        TraverseSelection
+                            CaseSelection
+                                WhenCase
+                                    ConditionAnd
+                                        BooleanAnd
+                                            object_not_found
+                                        BooleanNand
+                                            Property.Processed
+                                    WhenCaseSelection
+                                        Assignment
+                                            SetBoolean
+                                                object_not_found   := <<False>>
+                                                Property.Processed := <<True>>
+                                        Relate
+                                            Property : Writing : Product
+                                        GenerateEvent
+                                            Property : Generate
+                    CaseSelection
+                        WhenCase
+                            ConditionAnd
+                                BooleanAnd
+                                    object_not_found
+                            WhenCaseSelection
+                                GenerateEvent
+                                    Product : Complete
+                Transition
+                    EventState
+                        Done     -> Generating_Property
+                        Complete -> Generating_Icon
+                    CannotHappen
+                        Generate
+
+            |-----------
+
+            DynamicState:Generating_Icon
+                ProcessData
+                    Flag : object_not_found
+                StateAction
+                    Assignment
+                        SetBoolean
+                            object_not_found := <<True>>
+                    Traverse
+                        Navigation
+                            Product : Includes : Icon
+                        TraverseSelection
+                            CaseSelection
+                                WhenCase
+                                    ConditionAnd
+                                        BooleanAnd
+                                            object_not_found
+                                        BooleanNand
+                                            Icon.Processed
+                                    WhenCaseSelection
+                                        Assignment
+                                            SetBoolean
+                                                object_not_found := <<False>>
+                                                Icon.Processed   := <<True>>
+                                        Relate
+                                            Icon : Writing : Product
+                                        GenerateEvent
+                                            Icon : Generate
+                    CaseSelection
+                        WhenCase
+                            ConditionAnd
+                                BooleanAnd
+                                    object_not_found
+                            WhenCaseSelection
+                                GenerateEvent
+                                    Product : Complete
+                Transition
+                    EventState
+                        Done     -> Generating_Icon
+                        Complete -> Generating_Directory
+                    CannotHappen
+                        Generate
+
+            |-----------
+
+            DynamicState:Generating_Directory
+                StateAction
+                    Traverse
+                        Navigation
+                            Product : Includes : Directory
+                        TraverseSelection
+                            Relate
+                                Directory : Writing : Product
+                            GenerateEvent
+                                Directory : Generate
+                Transition
+                    EventState
+                        Complete -> Generating_Feature
+                    CannotHappen
+                        Generate
+                        Done
+
+            |-----------
+
+            DynamicState:Generating_Feature
+                StateAction
+                    Traverse
+                        Navigation
+                            Product : Includes : Feature
+                        TraverseSelection
+                            Relate
+                                Feature : Writing : Product
+                            GenerateEvent
+                                Feature : Generate
+                Transition
+                    EventState
+                        Complete -> Generating_Miscellaneous
+                    CannotHappen
+                        Generate
+                        Done
+
+            |-----------
+
+            DynamicState:Generating_Miscellaneous
+                StateAction
+                    Template
+                        <<:>>
+                        <<:>>
+                        <<:>><!-- Miscellaneous -->
+                        <<:>><!-- ~~~~~~~~~~~~~ -->
+                        <<:>>
+                        <<:>><Media
+                        <<:>>    Id='1'
+                        <<:>>    Cabinet='Sample.cab'
+                        <<:>>    EmbedCab='yes'
+                        <<:>>    DiskPrompt='CD-ROM #1'/>
+                        <<:>>
+                        <<:>><CustomAction
+                        <<:>>    Id='AssignTargetDir'
+                        <<:>>    Property='TARGETDIR'
+                        <<:>>    Value='C:\'
+                        <<:>>    Execute='firstSequence'/>
+                        <<:>>
+                        <<:>><InstallUISequence>
+                        <<:>>
+                        <<:>>    <Custom
+                        <<:>>        Action='AssignTargetDir'
+                        <<:>>        Before='CostInitialize'>
+                        <<:>>
+                        <<:>>        TARGETDIR=""
+                        <<:>>
+                        <<:>>     </Custom>
+                        <<:>>
+                        <<:>></InstallUISequence>
+                        <<:>>
+                        <<:>><InstallExecuteSequence>
+                        <<:>>
+                        <<:>>    <Custom
+                        <<:>>        Action='AssignTargetDir'
+                        <<:>>        Before='CostInitialize'>
+                        <<:>>
+                        <<:>>        TARGETDIR=""
+                        <<:>>
+                        <<:>>     </Custom>
+                        <<:>>
+                        <<:>></InstallExecuteSequence>
+                        <<:>>
+                        <<:>><UIRef Id='WixUI_Minimal'/>
+                        <<:>><UIRef Id='WixUI_ErrorProgressText'/>
+                        <<:>>
+                        <<:>>
+                        <<:>><!-- Replace Standard License and Installer Icons -->
+                        <<:>>
+                        <<:>><WixVariable Id='WixUILicenseRtf' Value='Source\Licence.rtf'/>
+                        <<:>><WixVariable Id='WixUIDialogBmp'  Value='Source\Icons\UIDialog.bmp'/>
+                        <<:>><WixVariable Id='WixUIBannerBmp'  Value='Source\Icons\UIBanner.bmp'/>
+                    GenerateEvent
+                        Product : Complete
+                Transition
+                    EventState
+                        Complete -> Idle
+                    CannotHappen
+                        Generate
+                        Done
+
+            |-----------
+
+            DynamicState:Idle
+                StateAction
+                    Template
+                        <<:>>
+                        <<TabOut>>
+                        <<:>></Product>
+                        <<:>>
+                        <<TabOut>>
+                        <<:>></Wix>
+                        <<:>>
+                        <<:>>
+                        <<:>><!-- Copyright (C) 2017 Dark Matter Systems Ltd. All rights reserved. -->
+                        <<:>>
+                    Stream
+                        DISPLAY:
+                Transition
+                    CannotHappen
+                        Generate
+                        Done
+                        Complete
